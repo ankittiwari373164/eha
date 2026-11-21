@@ -7,14 +7,13 @@ const db = require('./lib/db');
 const zoho = require('./lib/zoho');
 
 const PORT = process.env.PORT || 3000;
-const BASE_URL = (process.env.BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+const BASE_URL = (process.env.BASE_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? 'https://' + process.env.VERCEL_PROJECT_PRODUCTION_URL : `http://localhost:${PORT}`)).replace(/\/$/, '');
 const SECURE_COOKIE = BASE_URL.startsWith('https://');
 const SESSION_HOURS = 12;
 
 const app = express();
 app.disable('x-powered-by');
-app.set('trust proxy', process.env.TRUST_PROXY === '1');
-db.load();
+app.set('trust proxy', process.env.TRUST_PROXY === '1' || !!process.env.VERCEL);
 
 // ---------- helpers ----------
 const hashPw = (pw, salt = crypto.randomBytes(16).toString('hex')) => salt + ':' + crypto.scryptSync(pw, salt, 64).toString('hex');
@@ -46,18 +45,18 @@ function limit(key, max, windowMs) {
 setInterval(() => { const t = Date.now(); for (const [k, b] of buckets) if (t > b.reset) buckets.delete(k); }, 60000).unref();
 
 // first-run admin
-(function seedAdmin() {
+function seedAdmin() {
   const s = db.get();
   if (!s.users.length) {
     const email = (process.env.ADMIN_EMAIL || 'admin@eha.com.au').toLowerCase();
     const pw = process.env.ADMIN_PASSWORD || 'ChangeMe!2026';
     s.users.push({ id: crypto.randomUUID(), email, name: 'Administrator', pw: hashPw(pw), createdAt: now(), mustChange: !process.env.ADMIN_PASSWORD });
-    db.save(true);
+    db.save();
     console.log(`\n  Admin created → ${email} / ${process.env.ADMIN_PASSWORD ? '(password from ADMIN_PASSWORD)' : pw}\n`);
   }
   // purge expired sessions
-  for (const [k, v] of Object.entries(s.sessions)) if (v.exp < Date.now()) delete s.sessions[k];
-})();
+  for (const [k, v] of Object.entries(s.sessions)) if (v.exp < Date.now()) { delete s.sessions[k]; db.save(); }
+}
 
 // ---------- security headers ----------
 app.use((req, res, next) => {
@@ -72,6 +71,19 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json({ limit: '50kb' }));
+
+// Load data for every request and persist changes before the response is sent
+const isStatic = (p) => /^\/(assets|admin\/assets)\//.test(p) || /\.(html|ico|png|webp|svg|css|js)$/.test(p) && !p.startsWith('/admin');
+app.use(async (req, res, next) => {
+  if (isStatic(req.path)) return next();
+  try { await db.refresh(); seedAdmin(); } catch (e) { console.error(e); return res.status(503).json({ error: 'Database unavailable: ' + e.message }); }
+  const end = res.end;
+  res.end = function (...args) {
+    db.flush().catch((e) => console.error('DB save failed', e)).finally(() => end.apply(res, args));
+    return res;
+  };
+  next();
+});
 
 // ---------- auth ----------
 function currentUser(req) {
@@ -156,8 +168,10 @@ app.post('/api/leads', async (req, res) => {
     zoho: { id: null, syncedAt: null, error: null },
   });
   s.leads.unshift(rec); db.save();
+  if (s.settings.zoho.autoSync && zoho.configured(s.settings.zoho)) {
+    await Promise.race([syncLead(rec).catch(() => {}), new Promise((r) => setTimeout(r, 8000))]);
+  }
   res.json({ ok: true, ref: rec.ref });
-  if (s.settings.zoho.autoSync && zoho.configured(s.settings.zoho)) syncLead(rec).catch(() => {});
 });
 
 function scoreLead(l, source) {
@@ -206,7 +220,7 @@ A.get('/stats', (req, res) => {
     avgScore: L.length ? Math.round(L.reduce((a, l) => a + (l.score || 0), 0) / L.length) : 0,
     unsynced: L.filter((l) => !l.zoho || !l.zoho.id).length,
     recent: L.slice(0, 6).map((l) => ({ id: l.id, ref: l.ref, name: l.name, source: l.source, status: l.status, createdAt: l.createdAt, score: l.score })),
-    zohoConnected: zoho.configured(db.get().settings.zoho),
+    zohoConnected: zoho.configured(db.get().settings.zoho), storage: db.mode,
   });
 });
 
@@ -356,4 +370,5 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 app.use((req, res) => res.status(404).sendFile(path.join(__dirname, 'public', '404.html')));
 
-app.listen(PORT, () => console.log(`EHA site running → ${BASE_URL}  (admin: ${BASE_URL}/admin)`));
+module.exports = app;
+if (require.main === module) app.listen(PORT, () => console.log(`EHA site running → ${BASE_URL}  (admin: ${BASE_URL}/admin) [storage: ${db.mode}]`));

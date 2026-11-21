@@ -36,6 +36,8 @@
   // ---------- dashboard ----------
   async function loadDash() {
     const s = await api('/stats');
+    let warn = $('#storageWarn');
+    if (s.storage === 'tmp' && !warn) { warn = document.createElement('div'); warn.id = 'storageWarn'; warn.style.cssText = 'background:#fdecea;color:#9b2c20;padding:14px 18px;border-radius:12px;margin-bottom:18px;font-weight:700'; warn.textContent = '⚠ No database connected. On Vercel, leads are only kept temporarily and WILL be lost. Add Upstash Redis in Vercel → Storage, then redeploy.'; $('#v-dashboard').insertBefore(warn, $('.kpis')); }
     const h = new Date().getHours();
     $('#greet').textContent = `Good ${h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'}, ${me ? me.name.split(' ')[0] : ''}`;
     countUp($('#k-total'), s.total); countUp($('#k-new'), s.byStatus.new); countUp($('#k-unsync'), s.unsynced); $('#k-conv').textContent = s.conversion + '%';
