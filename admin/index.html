@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EHA Admin — Leads & CRM</title><meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" href="/assets/img/icon-32.png">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/assets/admin.css"></head>
+<body>
+<div class="mobile-top"><button id="menuBtn" aria-label="Menu">☰</button><b>EHA Admin</b><span></span></div>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="logo"><img src="/assets/img/logo.webp" alt="EHA"><span>ADMIN</span></div>
+    <nav>
+      <a href="#dashboard" data-v="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+      <a href="#leads" data-v="leads"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M16 4a3.5 3.5 0 0 1 0 7M18 14c2.5.6 4 2.8 4 6"/></svg>Leads<span class="pill" id="newCount" hidden></span></a>
+      <a href="#zoho" data-v="zoho"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Zoho CRM</a>
+      <a href="#settings" data-v="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings & team</a>
+      <a href="/" target="_blank"><svg viewBox="0 0 24 24"><path d="M14 3h7v7M21 3l-9 9M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg>View website</a>
+    </nav>
+    <div class="me"><b id="meName">…</b><span id="meEmail"></span><br><button class="btn sm ghost" id="logout" style="margin-top:10px">Sign out</button></div>
+  </aside>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section class="view" id="v-dashboard">
+      <div class="top"><div><h1 id="greet">Dashboard</h1><p>Your lead pipeline at a glance.</p></div><div style="display:flex;gap:10px"><a class="btn ghost" href="/admin/api/leads.csv">Export CSV</a><a class="btn" href="#leads">View all leads →</a></div></div>
+      <div class="kpis">
+        <div class="card kpi"><small>Total leads</small><b id="k-total">–</b><span class="d" id="k-week"></span></div>
+        <div class="card kpi"><small>New (to action)</small><b id="k-new">–</b><span class="d muted">awaiting first contact</span></div>
+        <div class="card kpi"><small>Win rate</small><b id="k-conv">–</b><span class="d muted">leads marked won</span></div>
+        <div class="card kpi"><small>Not in Zoho</small><b id="k-unsync">–</b><span class="d" id="k-zoho"></span></div>
+      </div>
+      <div class="row2">
+        <div class="card"><h3>Leads — last 30 days</h3><div class="chart" id="chart"></div></div>
+        <div class="card"><h3>Pipeline</h3><div class="bars" id="pipe"></div></div>
+      </div>
+      <div class="row2">
+        <div class="card"><h3>Latest leads <a class="btn sm ghost" href="#leads">All →</a></h3><div class="tbl-wrap"><table><tbody id="recent"></tbody></table></div></div>
+        <div class="card"><h3>By source</h3><div class="bars" id="sources"></div><h3 style="margin-top:22px">By state</h3><div class="bars" id="states"></div></div>
+      </div>
+    </section>
+
+    <!-- LEADS -->
+    <section class="view" id="v-leads">
+      <div class="top"><div><h1>Leads</h1><p id="leadsSub">Manage, qualify and sync enquiries.</p></div><div style="display:flex;gap:10px"><a class="btn ghost" href="/admin/api/leads.csv">Export CSV</a></div></div>
+      <div class="card">
+        <div class="toolbar">
+          <input id="q" placeholder="Search name, email, phone, ref…" type="search">
+          <select id="fStatus"><option value="">All statuses</option><option>new</option><option>contacted</option><option>qualified</option><option>appointment</option><option>won</option><option>lost</option></select>
+          <select id="fSource"><option value="">All sources</option><option>assessment</option><option>contact</option><option>callback</option><option>newsletter</option></select>
+          <select id="fZoho"><option value="">Zoho: any</option><option value="synced">Synced</option><option value="unsynced">Not synced</option></select>
+          <select id="fSort"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="score">Highest score</option><option value="name">Name A–Z</option></select>
+        </div>
+        <div class="bulk" id="bulk"><b id="bulkN"></b> selected
+          <select id="bulkAct"><option value="">Choose action…</option><optgroup label="Set status"><option value="contacted">→ Contacted</option><option value="qualified">→ Qualified</option><option value="appointment">→ Appointment</option><option value="won">→ Won</option><option value="lost">→ Lost</option></optgroup><option value="sync">Sync to Zoho CRM</option><option value="delete">Delete</option></select>
+          <button class="btn sm gold" id="bulkGo">Apply</button><button class="btn sm ghost" id="bulkClear">Clear</button></div>
+        <div class="tbl-wrap"><table><thead><tr><th><input type="checkbox" id="selAll" aria-label="Select all"></th><th>Lead</th><th class="hide-m">Contact</th><th>Status</th><th class="hide-m">Source</th><th class="hide-m">Score</th><th class="hide-m">Zoho</th><th class="hide-m">Received</th></tr></thead><tbody id="leadRows"></tbody></table></div>
+        <div class="pager"><span id="pgInfo"></span><div style="display:flex;gap:8px"><button class="btn sm ghost" id="pgPrev">← Prev</button><button class="btn sm ghost" id="pgNext">Next →</button></div></div>
+      </div>
+    </section>
+
+    <!-- ZOHO -->
+    <section class="view" id="v-zoho">
+      <div class="top"><div><h1>Zoho CRM integration</h1><p>Push website leads into Zoho CRM <b>Leads</b> automatically or on demand.</p></div></div>
+      <div class="row2">
+        <div class="card">
+          <div class="status-box"><span class="dot no" id="zDot"></span><div><b id="zState">Not connected</b><br><span class="muted" id="zAs"></span></div><div style="margin-left:auto;display:flex;gap:8px"><button class="btn sm ghost" id="zTest">Test</button><button class="btn sm danger" id="zDisc">Disconnect</button></div></div>
+          <form id="zForm" class="form-grid">
+            <div class="fld"><label>Data centre</label><select class="inp" name="dc" id="zDc"></select><div class="hint">Where your Zoho account lives (e.g. Australia → zoho.com.au)</div></div>
+            <div class="fld"><label>Lead Source value</label><input class="inp" name="leadSource" placeholder="Website"><div class="hint">Must match a Lead Source picklist value in Zoho</div></div>
+            <div class="fld"><label>Client ID</label><input class="inp" name="clientId" autocomplete="off"></div>
+            <div class="fld"><label>Client Secret</label><input class="inp" name="clientSecret" type="password" autocomplete="new-password" placeholder="••••••• (leave blank to keep)"></div>
+            <div class="fld" style="grid-column:1/-1"><label>Refresh token (optional — or use “Connect with Zoho” below)</label><input class="inp" name="refreshToken" type="password" autocomplete="off" placeholder="1000.xxxx… from a Self Client (leave blank to keep)"></div>
+            <div class="fld" style="grid-column:1/-1"><label class="switch"><input type="checkbox" name="autoSync"><i></i>Automatically send every new lead to Zoho CRM</label></div>
+            <div style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">Save settings</button><a class="btn gold" id="zConnect" href="/admin/api/zoho/authorize">Connect with Zoho →</a><button class="btn ghost" type="button" id="zSyncAll">Sync all unsynced leads</button></div>
+          </form>
+        </div>
+        <div class="card"><h3>Setup guide</h3>
+          <ol class="steps-ol">
+            <li>Go to <b>api-console.zoho.com</b> (use your region’s domain, e.g. <code>api-console.zoho.com.au</code>).</li>
+            <li>Add a <b>Server-based Application</b>. Homepage: your site URL.</li>
+            <li>Authorised redirect URI — copy exactly:<br><code id="zRedirect"></code></li>
+            <li>Paste the Client ID & Secret here, choose your data centre and <b>Save</b>.</li>
+            <li>Click <b>Connect with Zoho</b> and approve access.</li>
+            <li>Click <b>Test</b>, then enable auto-sync.</li>
+          </ol>
+          <p class="muted" style="margin-top:14px;font-size:.85rem">Alternative: create a <b>Self Client</b>, generate a code with scope <code>ZohoCRM.modules.leads.ALL,ZohoCRM.users.READ</code>, exchange it for a refresh token and paste it above.</p>
+          <p class="muted" style="margin-top:10px;font-size:.85rem">Leads are <b>upserted by email</b>, so re-syncing updates the existing Zoho record instead of creating duplicates.</p>
+        </div>
+      </div>
+      <div class="card"><h3>Sync activity</h3><div class="log" id="zLog"></div></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="v-settings">
+      <div class="top"><div><h1>Settings & team</h1><p>Your account and staff access.</p></div></div>
+      <div class="row2">
+        <div class="card"><h3>Your account</h3><p class="muted" id="mustChange" hidden style="background:#fef3c7;color:#92400e;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-weight:700">Please change the default password before using the admin panel.</p>
+          <form id="acctForm" class="form-grid">
+            <div class="fld"><label>Name</label><input class="inp" name="name"></div>
+            <div class="fld"><label>Email</label><input class="inp" name="email" type="email"></div>
+            <div class="fld"><label>Current password</label><input class="inp" name="currentPassword" type="password" autocomplete="current-password"></div>
+            <div class="fld"><label>New password (min 10 chars)</label><input class="inp" name="newPassword" type="password" autocomplete="new-password"></div>
+            <div><button class="btn" type="submit">Save account</button></div>
+          </form></div>
+        <div class="card"><h3>Team members</h3><div id="users"></div>
+          <form id="userForm" class="form-grid" style="margin-top:18px;padding-top:18px;border-top:1px solid var(--line)">
+            <div class="fld"><label>Name</label><input class="inp" name="name" required></div>
+            <div class="fld"><label>Email</label><input class="inp" name="email" type="email" required></div>
+            <div class="fld"><label>Temporary password</label><input class="inp" name="password" type="text" autocomplete="off" required></div>
+            <div style="align-self:end"><button class="btn" type="submit">Add team member</button></div>
+          </form></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="drawer-bg" id="drawerBg"></div>
+<aside class="drawer" id="drawer" aria-label="Lead details"></aside>
+<div class="toasts" id="toasts"></div>
+<script src="/admin/assets/admin.js"></script>
+</body></html>
