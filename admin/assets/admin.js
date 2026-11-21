@@ -9,7 +9,7 @@
 
   async function api(path, opts = {}) {
     const r = await fetch('/admin/api' + path, { ...opts, headers: { 'Content-Type': 'application/json', 'X-EHA-Admin': '1', ...(opts.headers || {}) }, body: opts.body ? JSON.stringify(opts.body) : undefined });
-    if (r.status === 401) { location.href = '/admin/login.html'; throw new Error('Signed out'); }
+    if (r.status === 401) { location.href = '/admin/login'; throw new Error('Signed out'); }
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { const e = new Error(j.error || 'Request failed'); e.data = j; throw e; }
     return j;
@@ -31,7 +31,7 @@
   };
   addEventListener('hashchange', route);
   $('#menuBtn').onclick = () => $('#side').classList.toggle('open');
-  $('#logout').onclick = async () => { await api('/logout', { method: 'POST' }).catch(() => {}); location.href = '/admin/login.html'; };
+  $('#logout').onclick = async () => { await api('/logout', { method: 'POST' }).catch(() => {}); location.href = '/admin/login'; };
 
   // ---------- dashboard ----------
   async function loadDash() {

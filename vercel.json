@@ -1,7 +1,17 @@
 {
   "version": 2,
   "functions": {
-    "api/index.js": { "includeFiles": "{public,admin,lib}/**", "maxDuration": 30 }
+    "api/index.js": {
+      "includeFiles": "{public,admin,lib}/**",
+      "maxDuration": 30
+    }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index.js" }]
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index.js"
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
 }

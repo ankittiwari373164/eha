@@ -94,7 +94,7 @@ function currentUser(req) {
 }
 function requireAuth(req, res, next) {
   const u = currentUser(req);
-  if (!u) return req.path.startsWith('/api') || req.originalUrl.startsWith('/admin/api') ? res.status(401).json({ error: 'Not signed in' }) : res.redirect('/admin/login.html');
+  if (!u) return req.path.startsWith('/api') || req.originalUrl.startsWith('/admin/api') ? res.status(401).json({ error: 'Not signed in' }) : res.redirect('/admin/login');
   // CSRF: mutating admin API calls must carry the custom header (cannot be sent cross-site without CORS)
   if (req.method !== 'GET' && req.get('X-EHA-Admin') !== '1') return res.status(403).json({ error: 'Bad request origin' });
   req.user = u; next();
@@ -360,10 +360,15 @@ app.get('/admin/zoho/callback', requireAuth, async (req, res) => {
 });
 
 // ---------- static ----------
-app.get('/admin/login.html', (req, res, next) => (currentUser(req) ? res.redirect('/admin/') : next()));
-app.get('/admin/login.html', (req, res) => res.sendFile(path.join(__dirname, 'admin', 'login.html')));
+// Clean URLs: /about.html → /about, /index.html → /
+app.use((req, res, next) => {
+  if (req.method !== 'GET' || !req.path.endsWith('.html') || req.path === '/404.html') return next();
+  const to = req.path.endsWith('/index.html') ? req.path.slice(0, -10) : req.path.slice(0, -5);
+  res.redirect(301, (to || '/') + req.originalUrl.slice(req.path.length));
+});
+app.get('/admin/login', (req, res) => (currentUser(req) ? res.redirect('/admin/') : res.sendFile(path.join(__dirname, 'admin', 'login.html'))));
 app.use('/admin/assets', express.static(path.join(__dirname, 'admin', 'assets')));
-app.get(['/admin', '/admin/', '/admin/index.html'], requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
+app.get(['/admin', '/admin/'], requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
 app.use(express.static(path.join(__dirname, 'public'), {
   extensions: ['html'],
   setHeaders: (res, file) => res.set('Cache-Control', file.endsWith('.html') ? 'no-cache' : 'public, max-age=3600'),

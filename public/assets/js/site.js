@@ -26,7 +26,7 @@
   // ---- nav ----
   const nav = $('header.nav'), prog = $('.scroll-progress'), sticky = $('.sticky-cta'), top = $('.to-top');
   $('.burger')?.addEventListener('click', () => { document.body.classList.toggle('nav-open'); $('.burger').setAttribute('aria-expanded', document.body.classList.contains('nav-open')); });
-  $$('.menu a').forEach((a) => { if (a.pathname === location.pathname || (location.pathname === '/' && a.pathname === '/index.html')) a.classList.add('active'); });
+  $$('.menu a').forEach((a) => { if (a.pathname === location.pathname || (location.pathname === '/' && a.pathname === '/')) a.classList.add('active'); });
   top?.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
 
   // ---- scroll-driven effects ----
@@ -177,7 +177,7 @@
       next.disabled = true; next.innerHTML = 'Sending…';
       try {
         const j = await submitLead(Object.assign(formData(wz), { source: 'assessment' }));
-        $('.wz-body', wz).innerHTML = `<div class="success"><svg class="tick" viewBox="0 0 110 110"><circle cx="55" cy="55" r="50"/><path d="M33 57l15 15 30-32"/></svg><h2>You’re one step closer.</h2><div class="ref">Reference ${j.ref}</div><p class="lead" style="margin:0 auto">Thanks! An EHA specialist will review your answers and call you within one business day to talk through your options.</p><p style="margin-top:28px"><a class="btn" href="/homes.html">Browse home designs <span class="arr">→</span></a></p></div>`;
+        $('.wz-body', wz).innerHTML = `<div class="success"><svg class="tick" viewBox="0 0 110 110"><circle cx="55" cy="55" r="50"/><path d="M33 57l15 15 30-32"/></svg><h2>You’re one step closer.</h2><div class="ref">Reference ${j.ref}</div><p class="lead" style="margin:0 auto">Thanks! An EHA specialist will review your answers and call you within one business day to talk through your options.</p><p style="margin-top:28px"><a class="btn" href="/homes">Browse home designs <span class="arr">→</span></a></p></div>`;
         bar.style.width = '100%'; list.forEach((l) => { l.classList.remove('on'); l.classList.add('done'); }); count.textContent = 'Complete';
       } catch (e) { showAlert(al, e.message); next.disabled = false; next.innerHTML = 'Send my assessment <span class="arr">→</span>'; }
     });
